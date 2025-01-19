@@ -64,7 +64,7 @@ async def init():
         await message.reply_photo(
             photo=image_url,
             caption=welcome_message,
-            parse_mode="Markdown"
+            parse_mode="markdown"
         )
 
     @app.on_message(filters.command("mode") & filters.user(SUDO_USERS))
