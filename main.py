@@ -182,9 +182,10 @@ async def incoming_groups(_, message):
             )
 
     print(f"[LOG] - {message.from_user.first_name} started the bot!")
-    
-print("[LOG] - Yukki Chat Bot Started")
-await idle()
+
+async def main():
+    await start_bot()
+    await idle()
 
 if __name__ == "__main__":
-    app.run()  # This ensures the bot keeps running
+    asyncio.run(main())  # This ensures the bot keeps running
