@@ -329,4 +329,5 @@ async def start_command(_, message: Message):
     await idle()
 
 if __name__ == "__main__":
-    loop.run_until_complete(init())
+    app.run()  # This ensures the bot keeps running
+
