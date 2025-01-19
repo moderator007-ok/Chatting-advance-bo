@@ -115,7 +115,7 @@ async def init():
                 return await message.reply_text(
                     "Please reply to forwarded messages only."
                 )
-            replied_id = message.reply_to_message_id
+            replied_id = message.reply_to_message.id
             try:
                 replied_user_id = save[replied_id]
             except Exception as e:
@@ -152,7 +152,7 @@ async def init():
                 return await message.reply_text(
                     "Please reply to forwarded messages only."
                 )
-            replied_id = message.reply_to_message_id
+            replied_id = message.reply_to_message.id
             try:
                 replied_user_id = save[replied_id]
             except Exception as e:
@@ -205,7 +205,7 @@ async def init():
                 "MONGO_DB_URI var not defined. Please define it first"
             )
         if message.reply_to_message:
-            x = message.reply_to_message.message_id
+            x = message.reply_to_message.id
             y = message.chat.id
         else:
             if len(message.command) < 2:
@@ -262,7 +262,7 @@ async def init():
                     return await message.reply_text(
                         "Please reply to forwarded messages only."
                     )
-                replied_id = message.reply_to_message_id
+                replied_id = message.reply_to_message.id
                 try:
                     replied_user_id = save[replied_id]
                 except Exception as e:
@@ -274,7 +274,7 @@ async def init():
                     return await app.copy_message(
                         replied_user_id,
                         message.chat.id,
-                        message.message_id,
+                        message.id,
                     )
                 except Exception as e:
                     print("Error copying message:", e)
@@ -286,7 +286,7 @@ async def init():
                     forwarded = await app.forward_messages(
                         config.LOG_GROUP_ID,
                         message.chat.id,
-                        message.message_id,
+                        message.id,
                     )
                     save[forwarded.message_id] = user_id
                 except Exception as e:
@@ -295,7 +295,7 @@ async def init():
             for user in SUDO_USERS:
                 try:
                     forwarded = await app.forward_messages(
-                        user, message.chat.id, message.message_id
+                        user, message.chat.id, message.id
                     )
                     save[forwarded.message_id] = user_id
                 except Exception as e:
@@ -310,7 +310,7 @@ async def init():
             forwarded = await app.forward_messages(
                 config.LOG_GROUP_ID,
                 message.chat.id,
-                message.message_id,
+                message.id,
             )
             save[forwarded.message_id] = message.from_user.id
 
