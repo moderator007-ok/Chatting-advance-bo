@@ -41,11 +41,11 @@ async def start_bot():
             print(f"Unexpected error occurred: {e}")
 
 async def init():
-    await start_bot()
-
+    await start_bot() 
+    
     @app.on_message(filters.command(["start", "help"]))
-async def start_command(_, message: Message):
-    if await mongo.is_banned_user(message.from_user.id):
+    async def start_command(_, message: Message):
+        if await mongo.is_banned_user(message.from_user.id): return
         return
     await mongo.add_served_user(message.from_user.id)
 
