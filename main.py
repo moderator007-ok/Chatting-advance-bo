@@ -1,3 +1,15 @@
+Thanks for sharing the additional code!
+
+It looks like your bot is trying to start multiple times, which is causing the `ConnectionError`. You need to ensure that the bot only starts once and avoid calling `app.start()` multiple times.
+
+Here's a revised version of your code where I've made a few changes to address the issue:
+
+1. Removed the redundant call to `app.start()` inside the retry logic.
+2. Added a check to see if the bot is already connected before attempting to start it.
+
+Here's the updated code:
+
+```python
 import asyncio
 from sys import version as pyver
 
@@ -25,22 +37,20 @@ save = {}
 grouplist = 1
 
 async def start_bot():
-    await app.start()
+    if app.is_connected:
+        print("Bot is already connected.")
+        return
 
-    # Retry logic for time synchronization issue
-    while True:
-        try:
-            await app.start()
-            print("Bot started successfully!")
-            break  # Exit loop if bot starts successfully
-        except BadMsgNotification as e:
-            if e.error_code == 16:
-                print("Time synchronization issue detected. Retrying...")
-                await asyncio.sleep(5)  # Wait for a few seconds before retrying
-                continue
-            else:
-                print(f"Unexpected error occurred: {e}")
-                break
+    try:
+        await app.start()
+        print("Bot started successfully!")
+    except BadMsgNotification as e:
+        if e.error_code == 16:
+            print("Time synchronization issue detected. Retrying...")
+            await asyncio.sleep(5)
+            await start_bot()
+        else:
+            print(f"Unexpected error occurred: {e}")
 
 async def init():
     await start_bot()
@@ -51,10 +61,8 @@ async def init():
             return
         await mongo.add_served_user(message.from_user.id)
 
-        # Image URL
         image_url = "https://telegra.ph/file/4d61a4d43b25f658484b4.jpg"
 
-        # Custom welcome message
         welcome_message = (
             "Welcome to Bot! 😊\n\n"
             "Here to assist you with whatever you need.\n\n"
@@ -269,7 +277,7 @@ async def init():
                 except Exception as e:
                     print(e)
                     return await message.reply_text(
-                        "Failed to send the message, User might have blocked the bot or something wrong happened. Please check logs"
+                        "Failed to send the message, User might have blocked the bot or something                wrong happened. Please check logs"
                     )
         else:
             if await mongo.is_group():
@@ -331,7 +339,6 @@ async def init():
 
     print("[LOG] - Yukki Chat Bot Started")
     await idle()
-
 
 if __name__ == "__main__":
     loop.run_until_complete(init())
