@@ -87,7 +87,20 @@ if MONGO_DB_URI != None:
         modelist[chat_id] = False
         user = await modedb.find_one({"chat_id": chat_id})
         if user:
-            return await modelist.delete_one({"chat_id": chat_id})
+            await modedb.delete_one({"chat_id": chat_id})
+        # Ensure that after disabling group mode, it switches to private
+        modelist[chat_id] = False
+
+    async def switch_to_private():
+        chat_id = 123  # Update with actual chat ID if needed
+        # Ensure that the mode is switched to private
+        modelist[chat_id] = False
+        # Update the database with the private mode
+        user = await modedb.find_one({"chat_id": chat_id})
+        if user:
+            await modedb.update_one({"chat_id": chat_id}, {"$set": {"mode": "private"}})
+        else:
+            await modedb.insert_one({"chat_id": chat_id, "mode": "private"})
 
 else:
 
