@@ -24,7 +24,7 @@ save = {}
 grouplist = 1
 
 async def start_bot():
-    # Check if the bot is already connected to avoid redundant connections
+    print("Starting bot...")
     if app.is_connected:
         print("Bot is already connected.")
         return
@@ -40,18 +40,16 @@ async def start_bot():
         else:
             print(f"Unexpected error occurred: {e}")
 
-# Function to add a user to the database
 def add_user(user_id):
-    # Add logic to save the user in your database
+    print(f"Adding user {user_id} to the database...")
     print(f"User {user_id} added to the database")
 
-# Function to add a group to the database
 def add_group(group_id):
-    # Add logic to save the group in your database
+    print(f"Adding group {group_id} to the database...")
     print(f"Group {group_id} added to the database")
 
 async def init():
-    # Start the bot only if it is not connected already
+    print("Initializing bot...")
     if not app.is_connected:
         await start_bot()
 
@@ -59,6 +57,7 @@ async def init():
     async def op(_, m: Message):
         try:
             if m.chat.type == enums.ChatType.PRIVATE:
+                print("Received /start command in private chat")
                 keyboard = InlineKeyboardMarkup(
                     [
                         [
@@ -78,19 +77,19 @@ async def init():
                 )
             print(m.from_user.first_name + " has started your bot!")
         except Exception as e:
-            print(e)
+            print("Error in /start command handler:", e)
 
     @app.on_message(filters.command("mode") & filters.user(SUDO_USERS))
     async def mode_func(_, message: Message):
+        print("Received /mode command")
         if db is None:
             return await message.reply_text(
                 "MONGO_DB_URI var not defined. Please define it first"
             )
-        usage = "**Usage:**\n\n/mode [group | private]\n\n**Group**: All the incoming messages will be forwarded to Log group.\n\n**Private**: All the incoming messages will be forwarded to the Private Messages of SUDO_USERS"
+        usage = "**Usage:**\n\n/mode [group | private]\n\n**Group**: All the incoming messages will be forwarded to Log group.\n\n**Private**: All the incoming messages will be forwarded to the Private Message of all SUDO_USERs"
         if len(message.command) != 2:
             return await message.reply_text(usage)
-        state = message.text.split(None, 1)[1].strip()
-        state = state.lower()
+        state = message.text.split(None, 1)[1].strip().lower()
         if state == "group":
             await mongo.group_on()
             await message.reply_text(
@@ -106,6 +105,7 @@ async def init():
 
     @app.on_message(filters.command("block") & filters.user(SUDO_USERS))
     async def block_func(_, message: Message):
+        print("Received /block command")
         if db is None:
             return await message.reply_text(
                 "MONGO_DB_URI var not defined. Please define it first"
@@ -142,6 +142,7 @@ async def init():
 
     @app.on_message(filters.command("unblock") & filters.user(SUDO_USERS))
     async def unblock_func(_, message: Message):
+        print("Received /unblock command")
         if db is None:
             return await message.reply_text(
                 "MONGO_DB_URI var not defined. Please define it first"
@@ -180,6 +181,7 @@ async def init():
 
     @app.on_message(filters.command("stats") & filters.user(SUDO_USERS))
     async def stats_func(_, message: Message):
+        print("Received /stats command")
         if db is None:
             return await message.reply_text(
                 "MONGO_DB_URI var not defined. Please define it first"
@@ -197,6 +199,7 @@ async def init():
 
     @app.on_message(filters.command("broadcast") & filters.user(SUDO_USERS))
     async def broadcast_func(_, message: Message):
+        print("Received /broadcast command")
         if db is None:
             return await message.reply_text(
                 "MONGO_DB_URI var not defined. Please define it first"
@@ -229,18 +232,18 @@ async def init():
                 if flood_time > 200:
                     continue
                 await asyncio.sleep(flood_time)
-            except Exception:
-                pass
+            except Exception as e:
+                print("Error in broadcast:", e)
         try:
             await message.reply_text(
                 f"**Broadcasted Message to {susr} Users.**"
             )
-        except:
-            pass
+        except Exception as e:
+            print("Error in reply after broadcast:", e)
 
     @app.on_message(filters.private & ~filters.command(["start", "mode", "block", "unblock", "stats", "broadcast"]))
     async def incoming_private(_, message: Message):
-        # Ignore edited messages
+        print("Received a private message")
         if message.edit_date:
             return
 
@@ -263,7 +266,7 @@ async def init():
                 try:
                     replied_user_id = save[replied_id]
                 except Exception as e:
-                    print(e)
+                    print("Error fetching replied user ID:", e)
                     return await message.reply_text(
                         "Failed to fetch user. You might've restarted bot or some error happened. Please check logs"
                     )
@@ -274,7 +277,7 @@ async def init():
                         message.message_id,
                     )
                 except Exception as e:
-                    print(e)
+                    print("Error copying message:", e)
                     return await message.reply_text(
                         "Failed to send the message, User might have blocked the bot or something wrong happened. Please check logs"
                     )
@@ -286,8 +289,8 @@ async def init():
                         message.message_id,
                     )
                     save[forwarded.message_id] = user_id
-                except:
-                    pass
+                except Exception as e:
+                    print("Error forwarding message in private:", e)
         else:
             for user in SUDO_USERS:
                 try:
@@ -295,11 +298,12 @@ async def init():
                         user, message.chat.id, message.message_id
                     )
                     save[forwarded.message_id] = user_id
-                except:
-                    pass
+                except Exception as e:
+                    print("Error forwarding message to SUDO_USERS:", e)
 
     @app.on_message(filters.group & ~filters.command(["start", "mode", "block", "unblock", "stats", "broadcast"]))
     async def incoming_group(_, message: Message):
+        print("Received a group message")
         if message.chat.type != enums.ChatType.GROUP:
             return
         if not await mongo.is_banned_user(message.from_user.id):
