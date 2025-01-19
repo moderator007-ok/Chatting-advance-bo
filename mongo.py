@@ -1,15 +1,4 @@
-#
-# Copyright (C) 2021-2022 by TeamYukki@Github, < https://github.com/YukkiChatBot >.
-#
-# This file is part of < https://github.com/TeamYukki/YukkiChatBot > project,
-# and is released under the "GNU v3.0 License Agreement".
-# Please see < https://github.com/TeamYukki/YukkiChatBot/blob/master/LICENSE >
-#
-# All rights reserved.
-#
-
 from motor.motor_asyncio import AsyncIOMotorClient as MongoClient
-
 from config import MONGO_DB_URI
 
 db = None
@@ -75,7 +64,7 @@ if MONGO_DB_URI != None:
 
     # Forward Mode
     async def is_group() -> bool:
-        chat_id = 123
+        chat_id = 123  # The chat ID for your group or chat mode
         mode = modelist.get(chat_id)
         if not mode:
             user = await modedb.find_one({"chat_id": chat_id})
