@@ -43,7 +43,7 @@ async def start_bot():
 async def init():
     await start_bot()
 
- @app.on_message(filters.command(["start", "help"]))
+@app.on_message(filters.command(["start", "help"]))
 async def start_command(_, message: Message):
     if await mongo.is_banned_user(message.from_user.id):
         return
@@ -66,6 +66,7 @@ async def start_command(_, message: Message):
         caption=welcome_message,
         parse_mode="html"
     )
+
 
 
     @app.on_message(filters.command("mode") & filters.user(SUDO_USERS))
