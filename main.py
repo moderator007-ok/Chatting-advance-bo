@@ -76,7 +76,7 @@ async def init():
                 )
             print(m.from_user.first_name + " has started your bot!")
         except Exception as e:
-            print(f"Error handling /start command: {e}")
+            print(e)
 
     @app.on_message(filters.command("mode") & filters.user(SUDO_USERS))
     async def mode_func(_, message: Message):
@@ -117,7 +117,7 @@ async def init():
             try:
                 replied_user_id = save[replied_id]
             except Exception as e:
-                print(f"Error fetching user ID for block: {e}")
+                print(e)
                 return await message.reply_text(
                     "Failed to fetch user. You might've restarted bot or some error happened. Please check logs"
                 )
@@ -153,7 +153,7 @@ async def init():
             try:
                 replied_user_id = save[replied_id]
             except Exception as e:
-                print(f"Error fetching user ID for unblock: {e}")
+                print(e)
                 return await message.reply_text(
                     "Failed to fetch user. You might've restarted bot or some error happened. Please check logs"
                 )
@@ -227,107 +227,58 @@ async def init():
                 if flood_time > 200:
                     continue
                 await asyncio.sleep(flood_time)
-            except Exception as e:
-                print(f"Error broadcasting message: {e}")
+            except Exception:
+                pass
         try:
             await message.reply_text(
                 f"**Broadcasted Message to {susr} Users.**"
             )
-        except Exception as e:
-            print(f"Error sending broadcast response: {e}")
+        except:
+            pass
 
     @app.on_message(filters.private)
     async def incoming_private(_, message: Message):
         if message.edit_date:
             return
 
-        print(f"Incoming private message from {message.from_user.first_name}: {message.text}")  # Debugging
-
         user_id = message.from_user.id
         if await mongo.is_banned_user(user_id):
-            print(f"User {user_id} is banned.")  # Debugging
             return
-        if user_id in SUDO_USERS:
-            if message.reply_to_message:
-                if (
-                    message.text == "/unblock"
-                    or message.text == "/block"
-                    or message.text == "/broadcast"
-                ):
-                    return
-                if not message.reply_to_message.forward_sender_name:
-                    return await message.reply_text(
-                        "Please reply to forwarded messages only."
-                    )
-                replied_id = message.reply_to_message_id
-                try:
-                    replied_user_id = save[replied_id]
-                except Exception as e:
-                    print(f"Error fetching user ID: {e}")
-                    return await message.reply_text(
-                        "Failed to fetch user. You might've restarted bot or some error happened. Please check logs"
-                    )
-                try:
-                    return await app.copy_message(
-                        replied_user_id,
-                        message.chat.id,
-                        message.message_id,
-                    )
-                except Exception as e:
-                    print(f"Error copying message: {e}")
-                    return await message.reply_text(
-                        "Failed to send the message, User might have blocked the bot or something wrong happened. Please check logs"
-                    )
-        else:
+
+        mode = await mongo.get_mode()  # Get the mode from the database (either group or private)
+        if mode == "group":
             try:
-                if hasattr(message, 'message_id'):
-                    print(f"Forwarding message with ID: {message.message_id}")  # Debugging log
-                    forwarded = await app.forward_messages(
-                        config.LOG_GROUP_ID,
-                        message.chat.id,
-                        message.message_id,
-                    )
-                    save[forwarded.message_id] = user_id
-                else:
-                    print("Message does not have message_id")  # Debugging log
+                await app.send_message(config.LOG_GROUP_ID, message.text)  # Send directly to group
+                print(f"Message sent to group: {message.text}")
             except Exception as e:
-                print(f"Error forwarding message: {e}")
+                print(f"Error sending message to group: {e}")
+        else:
+            for sudo_user in SUDO_USERS:
+                try:
+                    await app.send_message(sudo_user, message.text)  # Send directly to SUDO users
+                    print(f"Message sent to SUDO user: {sudo_user}")
+                except Exception as e:
+                    print(f"Error sending message to SUDO user {sudo_user}: {e}")
 
     @app.on_message(filters.group)
     async def incoming_groups(_, message: Message):
         if message.edit_date:
             return
 
-        if message.reply_to_message:
-            if (
-                message.text == "/unblock"
-                or message.text == "/block"
-                or message.text == "/broadcast"
-            ):
-                return
-            replied_id = message.reply_to_message_id
-            if not message.reply_to_message.forward_sender_name:
-                return await message.reply_text(
-                    "Please reply to forwarded messages only."
-                )
+        mode = await mongo.get_mode()  # Get the mode from the database (either group or private)
+        if mode == "group":
             try:
-                replied_user_id = save[replied_id]
+                await app.send_message(config.LOG_GROUP_ID, message.text)  # Send directly to group
+                print(f"Message sent to group: {message.text}")
             except Exception as e:
-                print(f"Error fetching user ID: {e}")
-                return await message.reply_text(
-                    "Failed to fetch user. You might've restarted bot or some error happened. Please check logs"
-                )
-            try:
-                return await app.copy_message(
-                    replied_user_id,
-                    message.chat.id,
-                    message.message_id,
-                )
-            except Exception as e:
-                print(f"Error copying message: {e}")
-                return await message.reply_text(
-                    "Failed to send the message, User might have blocked the bot or something wrong happened. Please check logs"
-                )
+                print(f"Error sending message to group: {e}")
+        else:
+            for sudo_user in SUDO_USERS:
+                try:
+                    await app.send_message(sudo_user, message.text)  # Send directly to SUDO users
+                    print(f"Message sent to SUDO user: {sudo_user}")
+                except Exception as e:
+                    print(f"Error sending message to SUDO user {sudo_user}: {e}")
 
     print("[LOG] - Yukki Chat Bot Started")
     await idle()
