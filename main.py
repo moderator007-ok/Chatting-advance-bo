@@ -238,47 +238,48 @@ async def init():
 
     @app.on_message(filters.private)
     async def incoming_private(_, message: Message):
-        if message.edit_date:
-            return
+    if message.edit_date:
+        return
 
-        user_id = message.from_user.id
-        if await mongo.is_banned_user(user_id):
-            return
+    user_id = message.from_user.id
+    if await mongo.is_banned_user(user_id):
+        return
 
-        mode = await mongo.get_mode()  # Get the mode from the database (either group or private)
-        if mode == "group":
+    mode = await mongo.is_group()  # Get the mode from the database (group mode or private mode)
+    if mode:  # If mode is group, send to group
+        try:
+            await app.send_message(config.LOG_GROUP_ID, message.text)  # Send directly to group
+            print(f"Message sent to group: {message.text}")
+        except Exception as e:
+            print(f"Error sending message to group: {e}")
+    else:  # If mode is private, send to sudo users
+        for sudo_user in SUDO_USERS:
             try:
-                await app.send_message(config.LOG_GROUP_ID, message.text)  # Send directly to group
-                print(f"Message sent to group: {message.text}")
+                await app.send_message(sudo_user, message.text)  # Send directly to SUDO users
+                print(f"Message sent to SUDO user: {sudo_user}")
             except Exception as e:
-                print(f"Error sending message to group: {e}")
-        else:
-            for sudo_user in SUDO_USERS:
-                try:
-                    await app.send_message(sudo_user, message.text)  # Send directly to SUDO users
-                    print(f"Message sent to SUDO user: {sudo_user}")
-                except Exception as e:
-                    print(f"Error sending message to SUDO user {sudo_user}: {e}")
+                print(f"Error sending message to SUDO user {sudo_user}: {e}")
 
-    @app.on_message(filters.group)
-    async def incoming_groups(_, message: Message):
-        if message.edit_date:
-            return
+@app.on_message(filters.group)
+async def incoming_groups(_, message: Message):
+    if message.edit_date:
+        return
 
-        mode = await mongo.get_mode()  # Get the mode from the database (either group or private)
-        if mode == "group":
+    mode = await mongo.is_group()  # Get the mode from the database (group mode or private mode)
+    if mode:  # If mode is group, send to group
+        try:
+            await app.send_message(config.LOG_GROUP_ID, message.text)  # Send directly to group
+            print(f"Message sent to group: {message.text}")
+        except Exception as e:
+            print(f"Error sending message to group: {e}")
+    else:  # If mode is private, send to sudo users
+        for sudo_user in SUDO_USERS:
             try:
-                await app.send_message(config.LOG_GROUP_ID, message.text)  # Send directly to group
-                print(f"Message sent to group: {message.text}")
+                await app.send_message(sudo_user, message.text)  # Send directly to SUDO users
+                print(f"Message sent to SUDO user: {sudo_user}")
             except Exception as e:
-                print(f"Error sending message to group: {e}")
-        else:
-            for sudo_user in SUDO_USERS:
-                try:
-                    await app.send_message(sudo_user, message.text)  # Send directly to SUDO users
-                    print(f"Message sent to SUDO user: {sudo_user}")
-                except Exception as e:
-                    print(f"Error sending message to SUDO user {sudo_user}: {e}")
+                print(f"Error sending message to SUDO user {sudo_user}: {e}")
+
 
     print("[LOG] - Yukki Chat Bot Started")
     await idle()
