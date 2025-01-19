@@ -42,12 +42,10 @@ async def start_bot():
 
 # Function to add a user to the database
 def add_user(user_id):
-    # Add logic to save the user in your database
     print(f"User {user_id} added to the database")
 
 # Function to add a group to the database
 def add_group(group_id):
-    # Add logic to save the group in your database
     print(f"Group {group_id} added to the database")
 
 async def init():
