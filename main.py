@@ -1,15 +1,4 @@
-Thanks for sharing the additional code!
 
-It looks like your bot is trying to start multiple times, which is causing the `ConnectionError`. You need to ensure that the bot only starts once and avoid calling `app.start()` multiple times.
-
-Here's a revised version of your code where I've made a few changes to address the issue:
-
-1. Removed the redundant call to `app.start()` inside the retry logic.
-2. Added a check to see if the bot is already connected before attempting to start it.
-
-Here's the updated code:
-
-```python
 import asyncio
 from sys import version as pyver
 
