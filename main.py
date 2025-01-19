@@ -45,7 +45,6 @@ async def init():
     
     @app.on_message(filters.command(["start", "help"]))
     async def start_command(_, message: Message):
-        if await mongo.is_banned_user(message.from_user.id): return
         return
     await mongo.add_served_user(message.from_user.id)
 
