@@ -288,7 +288,7 @@ async def init():
                         message.chat.id,
                         message.id,
                     )
-                    save[forwarded.message_id] = user_id
+                    save[forwarded.id] = user_id
                 except Exception as e:
                     print("Error forwarding message in private:", e)
         else:
@@ -297,7 +297,7 @@ async def init():
                     forwarded = await app.forward_messages(
                         user, message.chat.id, message.id
                     )
-                    save[forwarded.message_id] = user_id
+                    save[forwarded.id] = user_id
                 except Exception as e:
                     print("Error forwarding message to SUDO_USERS:", e)
 
@@ -312,7 +312,7 @@ async def init():
                 message.chat.id,
                 message.id,
             )
-            save[forwarded.message_id] = message.from_user.id
+            save[forwarded.id] = message.from_user.id
 
     await idle()
 
