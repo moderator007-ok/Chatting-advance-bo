@@ -1,10 +1,12 @@
 import asyncio
 from sys import version as pyver
+
 import pyrogram
 from pyrogram import __version__ as pyrover
 from pyrogram import filters, idle, enums
 from pyrogram.errors import FloodWait, BadMsgNotification
 from pyrogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton
+
 import config
 import mongo
 from mongo import db
@@ -80,13 +82,11 @@ async def init():
     async def mode_func(_, message: Message):
         if db is None:
             return await message.reply_text("MONGO_DB_URI var not defined. Please define it first")
-        
         usage = "**Usage:**\n\n/mode [group | private]\n\n**Group**: All the incoming messages will be forwarded to Log group.\n\n**Private**: All the incoming messages will be forwarded to the Private Messages of SUDO_USERS"
-        
         if len(message.command) != 2:
             return await message.reply_text(usage)
-        
-        state = message.text.split(None, 1)[1].strip().lower()
+        state = message.text.split(None, 1)[1].strip()
+        state = state.lower()
         if state == "group":
             await mongo.group_on()
             await message.reply_text("Group Mode Enabled. All the incoming messages will be forwarded to LOG Group")
@@ -100,7 +100,6 @@ async def init():
     async def block_func(_, message: Message):
         if db is None:
             return await message.reply_text("MONGO_DB_URI var not defined. Please define it first")
-        
         if message.reply_to_message:
             if not message.reply_to_message.forward_sender_name:
                 return await message.reply_text("Please reply to forwarded messages only.")
@@ -110,7 +109,6 @@ async def init():
             except Exception as e:
                 print(e)
                 return await message.reply_text("Failed to fetch user. You might've restarted bot or some error happened. Please check logs")
-            
             if await mongo.is_banned_user(replied_user_id):
                 return await message.reply_text("Already Blocked")
             else:
@@ -127,7 +125,6 @@ async def init():
     async def unblock_func(_, message: Message):
         if db is None:
             return await message.reply_text("MONGO_DB_URI var not defined. Please define it first")
-        
         if message.reply_to_message:
             if not message.reply_to_message.forward_sender_name:
                 return await message.reply_text("Please reply to forwarded messages only.")
@@ -137,7 +134,6 @@ async def init():
             except Exception as e:
                 print(e)
                 return await message.reply_text("Failed to fetch user. You might've restarted bot or some error happened. Please check logs")
-            
             if not await mongo.is_banned_user(replied_user_id):
                 return await message.reply_text("Already UnBlocked")
             else:
@@ -154,7 +150,6 @@ async def init():
     async def stats_func(_, message: Message):
         if db is None:
             return await message.reply_text("MONGO_DB_URI var not defined. Please define it first")
-        
         served_users = len(await mongo.get_served_users())
         blocked = await mongo.get_banned_count()
         text = f""" **ChatBot Stats:**
@@ -162,16 +157,14 @@ async def init():
 **Python Version :** {pyver.split()[0]}
 **Pyrogram Version :** {pyrover}
 
-**Served Users:** {served_users} 
+**Served Users:** {served_users}
 **Blocked Users:** {blocked}"""
-        
         await message.reply_text(text)
 
     @app.on_message(filters.command("broadcast") & filters.user(SUDO_USERS))
     async def broadcast_func(_, message: Message):
         if db is None:
             return await message.reply_text("MONGO_DB_URI var not defined. Please define it first")
-        
         if message.reply_to_message:
             x = message.reply_to_message.message_id
             y = message.chat.id
@@ -196,21 +189,25 @@ async def init():
                 await asyncio.sleep(flood_time)
             except Exception:
                 pass
-        
         try:
             await message.reply_text(f"**Broadcasted Message to {susr} Users.**")
         except:
             pass
 
-    @app.on_message(filters.private & ~filters.command(["start", "mode", "block", "unblock", "stats", "broadcast"]))
+    @app.on_message(filters.private)
     async def incoming_private(_, message: Message):
+        print(f"Received message from {message.from_user.id}: {message.text}")
         if message.edit_date:
             return
 
         user_id = message.from_user.id
         if await mongo.is_banned_user(user_id):
             return
-        
+
+        # This check was excluding non-text messages, so let's allow all messages.
+        if not message.text and not message.caption:
+            return
+
         if user_id in SUDO_USERS:
             if message.reply_to_message:
                 if message.text in ["/unblock", "/block", "/broadcast"]:
@@ -244,22 +241,24 @@ async def init():
                 except:
                     pass
 
-    @app.on_message(filters.group & ~filters.command(["start", "mode", "block", "unblock", "stats", "broadcast"]))
+    @app.on_message(filters.group)
     async def incoming_groups(_, message: Message):
         if message.edit_date:
             return
+
         if db is None:
             return await message.reply_text("MONGO_DB_URI var not defined. Please define it first")
         
         if await mongo.is_banned_user(message.from_user.id):
             return
-        
+
+        # Allow all types of messages (not just text).
         if not message.text and not message.caption:
             return
-        
+
         if message.chat.id == config.LOG_GROUP_ID:
             return
-        
+
         if await mongo.is_group_ignored(message.chat.id):
             return
 
@@ -269,7 +268,8 @@ async def init():
             save[forwarded.message_id] = message.from_user.id
             if message.text:
                 return await app.send_message(config.LOG_GROUP_ID, text)
-    
+
+    await app.start()
     await idle()
 
 loop.run_until_complete(init())
