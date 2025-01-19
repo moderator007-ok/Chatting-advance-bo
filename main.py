@@ -4,7 +4,7 @@ from sys import version as pyver
 import pyrogram
 from pyrogram import __version__ as pyrover
 from pyrogram import filters, idle
-from pyrogram.errors import FloodWait
+from pyrogram.errors import FloodWait, BadMsgNotification
 from pyrogram.types import Message
 
 import config
@@ -24,8 +24,26 @@ app = pyrogram.Client(
 save = {}
 grouplist = 1
 
-async def init():
+async def start_bot():
     await app.start()
+
+    # Retry logic for time synchronization issue
+    while True:
+        try:
+            await app.start()
+            print("Bot started successfully!")
+            break  # Exit loop if bot starts successfully
+        except BadMsgNotification as e:
+            if e.error_code == 16:
+                print("Time synchronization issue detected. Retrying...")
+                await asyncio.sleep(5)  # Wait for a few seconds before retrying
+                continue
+            else:
+                print(f"Unexpected error occurred: {e}")
+                break
+
+async def init():
+    await start_bot()
 
     @app.on_message(filters.command(["start", "help"]))
     async def start_command(_, message: Message):
