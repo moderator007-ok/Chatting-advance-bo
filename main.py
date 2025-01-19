@@ -245,45 +245,47 @@ async def init():
         user_id = message.from_user.id
         if await mongo.is_banned_user(user_id):
             return
-        if message.reply_to_message:
-            if (
-                message.text == "/unblock"
-                or message.text == "/block"
-                or message.text == "/broadcast"
-            ):
-                return
-            if not message.reply_to_message.forward_sender_name:
-                return await message.reply_text(
-                    "Please reply to forwarded messages only."
-                )
-            replied_id = message.reply_to_message_id
+        if user_id in SUDO_USERS:
+            if message.reply_to_message:
+                if (
+                    message.text == "/unblock"
+                    or message.text == "/block"
+                    or message.text == "/broadcast"
+                ):
+                    return
+                if not message.reply_to_message.forward_sender_name:
+                    return await message.reply_text(
+                        "Please reply to forwarded messages only."
+                    )
+                replied_id = message.reply_to_message_id
+                try:
+                    replied_user_id = save[replied_id]
+                except Exception as e:
+                    print(e)
+                    return await message.reply_text(
+                        "Failed to fetch user. You might've restarted bot or some error happened. Please check logs"
+                    )
+                try:
+                    return await app.copy_message(
+                        replied_user_id,
+                        message.chat.id,
+                        message.message_id,
+                    )
+                except Exception as e:
+                    print(e)
+                    return await message.reply_text(
+                        "Failed to send the message, User might have blocked the bot or something wrong happened. Please check logs"
+                    )
+        else:
             try:
-                replied_user_id = save[replied_id]
-            except Exception as e:
-                print(e)
-                return await message.reply_text(
-                    "Failed to fetch user. You might've restarted bot or some error happened. Please check logs"
-                )
-            try:
-                return await app.copy_message(
-                    replied_user_id,
+                forwarded = await app.forward_messages(
+                    config.LOG_GROUP_ID,
                     message.chat.id,
                     message.message_id,
                 )
-            except Exception as e:
-                print(e)
-                return await message.reply_text(
-                    "Failed to send the message, User might have blocked the bot or something wrong happened. Please check logs"
-                )
-        else:
-            for user in SUDO_USERS:
-                try:
-                    forwarded = await app.forward_messages(
-                        user, message.chat.id, message.message_id
-                    )
-                    save[forwarded.message_id] = user_id
-                except:
-                    pass
+                save[forwarded.message_id] = user_id
+            except:
+                pass
 
     @app.on_message(filters.group)
     async def incoming_groups(_, message: Message):
