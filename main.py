@@ -61,18 +61,18 @@ async def init():
                 keyboard = InlineKeyboardMarkup(
                     [
                         [
-                            InlineKeyboardButton("🗯 Main Channel", url="https://t.me/TechMonUPSC_2"),
-                            InlineKeyboardButton("📦 Backup Channel", url="https://t.me/TechMonxz")
+                            InlineKeyboardButton("🗯 Main Channel", url="https://t.me/TechMonxZ"),
+                            InlineKeyboardButton("📦 Backup Channel", url="https://t.me/+G84az0UUj6Q1NDll")
                         ],
                         [
-                            InlineKeyboardButton("💬 Support", url="https://t.me/TechMonXz")
+                            InlineKeyboardButton("💬 Owner Account", url="https://t.me/TechMonUPSC_2")
                         ]
                     ]
                 )
                 add_user(m.from_user.id)
                 await m.reply_photo(
-                    "https://telegra.ph/file/4d61a4d43b25f658484b4.jpg",
-                    caption="**🦊 Hello {}!\nI'm your friendly ChatBot. Message me if you need any help.\n\n__Powered By : @TechMonXz**".format(m.from_user.mention),
+                    "https://iili.io/2PDTlQS.md.jpg",
+                    caption="**🦊 Hello {}!\nI'm your friendly ChatBot. Message me if you need any help.\n\n__Powered By : @TechMonX**".format(m.from_user.mention),
                     reply_markup=keyboard
                 )
             print(m.from_user.first_name + " has started your bot!")
