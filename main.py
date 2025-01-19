@@ -43,23 +43,30 @@ async def start_bot():
 async def init():
     await start_bot()
 
-    @app.on_message(filters.command(["start", "help"]))
-    async def start_command(_, message: Message):
-        if await mongo.is_banned_user(message.from_user.id):
-            return
-        await mongo.add_served_user(message.from_user.id)
+  @app.on_message(filters.command(["start", "help"]))
+async def start_command(_, message: Message):
+    if await mongo.is_banned_user(message.from_user.id):
+        return
+    await mongo.add_served_user(message.from_user.id)
 
-        image_url = "https://telegra.ph/file/4d61a4d43b25f658484b4.jpg"
+    image_url = "https://telegra.ph/file/4d61a4d43b25f658484b4.jpg"
 
-        welcome_message = (
-            "Welcome to Bot! 😊\n\n"
-            "Here to assist you with whatever you need.\n\n"
-            "**Contact Admin:** [Click Here](t.me/YourAdminLink)\n"
-            "**Join Back Up:** [Backup Channel](t.me/YourBackupLink)\n"
-            "**Join Main Channel:** [Main Channel](t.me/YourMainChannelLink)\n"
-            "\nNote: Forwarding of messages is disabled for privacy. "
-            "Please do not share or take screenshots of this conversation."
-        )
+    welcome_message = (
+        "Welcome to Bot! 😊\n\n"
+        "Here to assist you with whatever you need.\n\n"
+        "**Contact Admin:** [Click Here](t.me/YourAdminLink)\n"
+        "**Join Back Up:** [Backup Channel](t.me/YourBackupLink)\n"
+        "**Join Main Channel:** [Main Channel](t.me/YourMainChannelLink)\n"
+        "\nNote: Forwarding of messages is disabled for privacy. "
+        "Please do not share or take screenshots of this conversation."
+    )
+
+    await message.reply_photo(
+        photo=image_url,
+        caption=welcome_message,
+        parse_mode="markdown2"
+    )
+
 
         await message.reply_photo(
             photo=image_url,
