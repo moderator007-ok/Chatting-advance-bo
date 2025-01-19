@@ -6,6 +6,6 @@ itsdangerous==2.0.1
 asyncio
 dnspython
 motor
-pyrogram==1.4.16
+pyrogram
 python-dotenv
 tgcrypto
