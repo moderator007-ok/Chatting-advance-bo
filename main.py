@@ -42,10 +42,12 @@ async def start_bot():
 
 # Function to add a user to the database
 def add_user(user_id):
+    # Add logic to save the user in your database
     print(f"User {user_id} added to the database")
 
 # Function to add a group to the database
 def add_group(group_id):
+    # Add logic to save the group in your database
     print(f"Group {group_id} added to the database")
 
 async def init():
@@ -55,7 +57,6 @@ async def init():
     async def op(_, m: Message):
         try:
             if m.chat.type == enums.ChatType.PRIVATE:
-                print(f"User {m.from_user.first_name} started the bot!")  # Debugging log
                 keyboard = InlineKeyboardMarkup(
                     [
                         [
@@ -73,8 +74,9 @@ async def init():
                     caption="**🦊 Hello {}!\nI'm your friendly ChatBot. Message me if you need any help.\n\n__Powered By : @TechMonXz**".format(m.from_user.mention),
                     reply_markup=keyboard
                 )
+            print(m.from_user.first_name + " has started your bot!")
         except Exception as e:
-            print(f"Error in /start command: {e}")
+            print(f"Error handling /start command: {e}")
 
     @app.on_message(filters.command("mode") & filters.user(SUDO_USERS))
     async def mode_func(_, message: Message):
@@ -85,8 +87,8 @@ async def init():
         usage = "**Usage:**\n\n/mode [group | private]\n\n**Group**: All the incoming messages will be forwarded to Log group.\n\n**Private**: All the incoming messages will be forwarded to the Private Messages of SUDO_USERS"
         if len(message.command) != 2:
             return await message.reply_text(usage)
-        state = message.text.split(None, 1)[1].strip().lower()
-        print(f"Mode set to: {state}")  # Debugging log
+        state = message.text.split(None, 1)[1].strip()
+        state = state.lower()
         if state == "group":
             await mongo.group_on()
             await message.reply_text(
@@ -107,7 +109,6 @@ async def init():
                 "MONGO_DB_URI var not defined. Please define it first"
             )
         if message.reply_to_message:
-            print(f"Blocking user: {message.reply_to_message.from_user.id}")  # Debugging log
             if not message.reply_to_message.forward_sender_name:
                 return await message.reply_text(
                     "Please reply to forwarded messages only."
@@ -116,25 +117,25 @@ async def init():
             try:
                 replied_user_id = save[replied_id]
             except Exception as e:
-                print(f"Error fetching user ID: {e}")
+                print(f"Error fetching user ID for block: {e}")
                 return await message.reply_text(
                     "Failed to fetch user. You might've restarted bot or some error happened. Please check logs"
                 )
             if await mongo.is_banned_user(replied_user_id):
-                return await message.reply_text("User already blocked")
+                return await message.reply_text("Already Blocked")
             else:
                 await mongo.add_banned_user(replied_user_id)
-                await message.reply_text("Banned user from the bot.")
+                await message.reply_text("Banned User from The Bot")
                 try:
                     await app.send_message(
                         replied_user_id,
                         "You're now banned from using the Bot by admins.",
                     )
-                except Exception as e:
-                    print(f"Error sending ban message: {e}")
+                except:
+                    pass
         else:
             return await message.reply_text(
-                "Reply to a forwarded message to block the user."
+                "Reply to a user's forwarded message to block him from using the bot"
             )
 
     @app.on_message(filters.command("unblock") & filters.user(SUDO_USERS))
@@ -144,7 +145,6 @@ async def init():
                 "MONGO_DB_URI var not defined. Please define it first"
             )
         if message.reply_to_message:
-            print(f"Unblocking user: {message.reply_to_message.from_user.id}")  # Debugging log
             if not message.reply_to_message.forward_sender_name:
                 return await message.reply_text(
                     "Please reply to forwarded messages only."
@@ -153,25 +153,27 @@ async def init():
             try:
                 replied_user_id = save[replied_id]
             except Exception as e:
-                print(f"Error fetching user ID: {e}")
+                print(f"Error fetching user ID for unblock: {e}")
                 return await message.reply_text(
                     "Failed to fetch user. You might've restarted bot or some error happened. Please check logs"
                 )
             if not await mongo.is_banned_user(replied_user_id):
-                return await message.reply_text("User is not blocked.")
+                return await message.reply_text("Already UnBlocked")
             else:
                 await mongo.remove_banned_user(replied_user_id)
-                await message.reply_text("Unblocked user from the bot.")
+                await message.reply_text(
+                    "Unblocked User from The Bot"
+                )
                 try:
                     await app.send_message(
                         replied_user_id,
                         "You're now unbanned from the Bot by admins.",
                     )
-                except Exception as e:
-                    print(f"Error sending unblock message: {e}")
+                except:
+                    pass
         else:
             return await message.reply_text(
-                "Reply to a forwarded message to unblock the user."
+                "Reply to a user's forwarded message to unblock him from the bot"
             )
 
     @app.on_message(filters.command("stats") & filters.user(SUDO_USERS))
@@ -206,7 +208,7 @@ async def init():
                     "**Usage**:\n/broadcast [MESSAGE] or [Reply to a Message]"
                 )
             query = message.text.split(None, 1)[1]
-        
+
         susr = 0
         served_users = []
         susers = await mongo.get_served_users()
@@ -226,13 +228,13 @@ async def init():
                     continue
                 await asyncio.sleep(flood_time)
             except Exception as e:
-                print(f"Error broadcasting: {e}")
+                print(f"Error broadcasting message: {e}")
         try:
             await message.reply_text(
                 f"**Broadcasted Message to {susr} Users.**"
             )
         except Exception as e:
-            print(f"Error sending broadcast completion message: {e}")
+            print(f"Error sending broadcast response: {e}")
 
     @app.on_message(filters.private)
     async def incoming_private(_, message: Message):
@@ -278,12 +280,16 @@ async def init():
                     )
         else:
             try:
-                forwarded = await app.forward_messages(
-                    config.LOG_GROUP_ID,
-                    message.chat.id,
-                    message.message_id,
-                )
-                save[forwarded.message_id] = user_id
+                if hasattr(message, 'message_id'):
+                    print(f"Forwarding message with ID: {message.message_id}")  # Debugging log
+                    forwarded = await app.forward_messages(
+                        config.LOG_GROUP_ID,
+                        message.chat.id,
+                        message.message_id,
+                    )
+                    save[forwarded.message_id] = user_id
+                else:
+                    print("Message does not have message_id")  # Debugging log
             except Exception as e:
                 print(f"Error forwarding message: {e}")
 
@@ -292,8 +298,6 @@ async def init():
         if message.edit_date:
             return
 
-        print(f"Incoming group message: {message.text}")  # Debugging
-
         if message.reply_to_message:
             if (
                 message.text == "/unblock"
@@ -301,17 +305,17 @@ async def init():
                 or message.text == "/broadcast"
             ):
                 return
+            replied_id = message.reply_to_message_id
             if not message.reply_to_message.forward_sender_name:
-                print("Message is not a forwarded message")  # Debugging
                 return await message.reply_text(
                     "Please reply to forwarded messages only."
                 )
             try:
-                replied_user_id = save[message.reply_to_message_id]
+                replied_user_id = save[replied_id]
             except Exception as e:
-                print(f"Error: {e}")
+                print(f"Error fetching user ID: {e}")
                 return await message.reply_text(
-                    "Failed to fetch user. You might've restarted the bot or some error happened. Please check logs."
+                    "Failed to fetch user. You might've restarted bot or some error happened. Please check logs"
                 )
             try:
                 return await app.copy_message(
@@ -322,7 +326,7 @@ async def init():
             except Exception as e:
                 print(f"Error copying message: {e}")
                 return await message.reply_text(
-                    "Failed to send the message, User might have blocked the bot or something wrong happened. Please check logs."
+                    "Failed to send the message, User might have blocked the bot or something wrong happened. Please check logs"
                 )
 
     print("[LOG] - Yukki Chat Bot Started")
