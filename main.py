@@ -266,7 +266,7 @@ async def init():
                     return await message.reply_text(
                         "Failed to send the message, User might have blocked the bot or something wrong happened. Please check logs"
                     )
-        else:
+             else:
             if await mongo.is_group():
                 try:
                     forwarded = await app.forward_messages(
@@ -274,7 +274,7 @@ async def init():
                         message.chat.id,
                         message.message_id,
                     )
-                                      save[forwarded.message_id] = user_id
+                    save[forwarded.message_id] = user_id
                 except:
                     pass
             else:
