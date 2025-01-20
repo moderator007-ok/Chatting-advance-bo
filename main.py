@@ -137,7 +137,7 @@ async def init():
                     pass
         else:
             return await message.reply_text(
-                "Reply to a user's forwarded message to block him from using the bot"
+                "Reply to a user's forwarded message to block them from using the bot"
             )
 
     @app.on_message(filters.command("unblock") & filters.user(SUDO_USERS))
@@ -176,7 +176,7 @@ async def init():
                     pass
         else:
             return await message.reply_text(
-                "Reply to a user's forwarded message to unblock him from the bot"
+                "Reply to a user's forwarded message to unblock them from the bot"
             )
 
     @app.on_message(filters.command("stats") & filters.user(SUDO_USERS))
