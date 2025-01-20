@@ -56,6 +56,9 @@ async def start_bot():
 def add_user(user_id):
     print(f"Adding user {user_id} to the database...")
     print(f"User {user_id} added to the database")
+    # Update the persistent storage
+    save[user_id] = True
+    save_state()
 
 def add_group(group_id):
     print(f"Adding group {group_id} to the database...")
