@@ -111,7 +111,7 @@ async def init():
                 "MONGO_DB_URI var not defined. Please define it first"
             )
         if message.reply_to_message:
-            if not message.reply_to_message.forward_sender_name:
+            if not message.reply_to_message.forward_sender_name and not message.reply_to_message.forward_from:
                 return await message.reply_text(
                     "Please reply to forwarded messages only."
                 )
@@ -148,7 +148,7 @@ async def init():
                 "MONGO_DB_URI var not defined. Please define it first"
             )
         if message.reply_to_message:
-            if not message.reply_to_message.forward_sender_name:
+            if not message.reply_to_message.forward_sender_name and not message.reply_to_message.forward_from:
                 return await message.reply_text(
                     "Please reply to forwarded messages only."
                 )
@@ -258,7 +258,7 @@ async def init():
                     or message.text == "/broadcast"
                 ):
                     return
-                if not message.reply_to_message.forward_sender_name:
+                if not message.reply_to_message.forward_sender_name and not message.reply_to_message.forward_from:
                     return await message.reply_text(
                         "Please reply to forwarded messages only."
                     )
