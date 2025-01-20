@@ -1,4 +1,5 @@
 import asyncio
+import json
 from sys import version as pyver
 import pyrogram
 from pyrogram import __version__ as pyrover
@@ -22,6 +23,18 @@ app = pyrogram.Client(
 
 save = {}
 grouplist = 1
+
+def load_save():
+    global save
+    try:
+        with open("save.json", "r") as f:
+            save = json.load(f)
+    except FileNotFoundError:
+        save = {}
+
+def save_state():
+    with open("save.json", "w") as f:
+        json.dump(save, f)
 
 async def start_bot():
     print("Starting bot...")
@@ -50,6 +63,7 @@ def add_group(group_id):
 
 async def init():
     print("Initializing bot...")
+    load_save()
     if not app.is_connected:
         await start_bot()
 
@@ -289,6 +303,7 @@ async def init():
                         message.id,
                     )
                     save[forwarded.id] = user_id
+                    save_state()
                 except Exception as e:
                     print("Error forwarding message in private:", e)
         else:
@@ -298,6 +313,7 @@ async def init():
                         user, message.chat.id, message.id
                     )
                     save[forwarded.id] = user_id
+                    save_state()
                 except Exception as e:
                     print("Error forwarding message to SUDO_USERS:", e)
 
@@ -313,6 +329,7 @@ async def init():
                 message.id,
             )
             save[forwarded.id] = message.from_user.id
+            save_state()
 
     await idle()
 
